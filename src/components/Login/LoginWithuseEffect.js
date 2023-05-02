@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
@@ -6,8 +6,6 @@ import Button from '../UI/Button/Button';
 
 const Login = (props) => {
   const [formIsValid, setFormIsValid] = useState(false);
-  /*
-  // commented as using useReducer we don't need ...
   const [enteredEmail, setEnteredEmail] = useState('');
   const [emailIsValid, setEmailIsValid] = useState();
   const [enteredPassword, setEnteredPassword] = useState('');
@@ -27,37 +25,20 @@ const Login = (props) => {
     };
   }, [enteredEmail, enteredPassword]);
 
-  */
-
-  const emailReducer = (state, action) => {
-    if (action.type === 'USER_INPUT') {
-      return { isValid: action.val.includes('@'), value: action.val };
-    }
-    if (action.type === 'INPUT_BLUR') {
-      return { value: state.value, isValid: state.value.trim().length > 6 };
-    }
-    return { value: '', isValid: false };
-  };
-
-  const [email, emailDispatcher] = useReducer(emailReducer, { value: '', isValid: false });
-
   const emailChangeHandler = (event) => {
-    // no need for useReducer hook
-    // setEnteredEmail(event.target.value);
-
-    emailDispatcher({ type: 'USER_INPUT', val: event.target.value });
+    setEnteredEmail(event.target.value);
   };
 
   const passwordChangeHandler = (event) => {
-    // setEnteredPassword(event.target.value);
+    setEnteredPassword(event.target.value);
   };
 
   const validateEmailHandler = () => {
-    emailDispatcher({ type: 'INPUT_BLUR' });
+    setEmailIsValid(enteredEmail.includes('@'));
   };
 
   const validatePasswordHandler = () => {
-    // setPasswordIsValid(enteredPassword.trim().length > 6);
+    setPasswordIsValid(enteredPassword.trim().length > 6);
   };
 
   const submitHandler = (event) => {
