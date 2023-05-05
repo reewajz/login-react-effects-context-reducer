@@ -6,29 +6,8 @@ import Button from '../UI/Button/Button';
 
 const Login = (props) => {
   const [formIsValid, setFormIsValid] = useState(false);
-  /*
-  // commented as using useReducer we don't need ...
-  const [enteredEmail, setEnteredEmail] = useState('');
-  const [emailIsValid, setEmailIsValid] = useState();
-  const [enteredPassword, setEnteredPassword] = useState('');
-  const [passwordIsValid, setPasswordIsValid] = useState();
 
-  useEffect(() => {
-    // adding this means this function will be triggered on every keystroke
-    // so instead we wanna debounce (for that we can use a timer --- also need to clear timer as well)
-    console.log('use effect');
-    const timeout = setTimeout(() => {
-      setFormIsValid(enteredEmail.includes('@') && enteredPassword.trim().length > 6);
-    }, 1000);
-
-    // this will run first whenever useEffect runs
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [enteredEmail, enteredPassword]);
-
-  */
-
+  // gets last stage and action
   const emailReducer = (state, action) => {
     if (action.type === 'USER_INPUT') {
       return { isValid: action.val.includes('@'), value: action.val };
@@ -39,16 +18,46 @@ const Login = (props) => {
     return { value: '', isValid: false };
   };
 
-  const [email, emailDispatcher] = useReducer(emailReducer, { value: '', isValid: false });
+  const passwordReducer = (state, action) => {
+    if (action.type === 'USER_INPUT') {
+      return { value: action.val, isValid: action.val.trim().length > 6 };
+    }
+    if (action.type === 'INPUT_BLUR') {
+      return { value: state.value, isValid: state.value.trim().length > 6 };
+    }
+    return { value: '', isValid: false };
+  };
+
+  const [emailState, emailDispatcher] = useReducer(emailReducer, { value: '', isValid: null });
+  const [passwordState, passwordDispatcher] = useReducer(passwordReducer, {
+    value: '',
+    isValid: null
+  });
+
+  // we destructure isValid propoerty from state to only run when validity changes
+  // ie if we had added emailState.isValid then it will run on every changes
+  const { isValid: isEmailValid } = emailState;
+  const { isValid: isPasswordValid } = passwordState;
+
+  useEffect(() => {
+    const identifier = setTimeout(() => {
+      console.log('Checking form validity!');
+      setFormIsValid(isEmailValid && isPasswordValid);
+    }, 500);
+
+    return () => {
+      console.log('CLEANUP');
+      clearTimeout(identifier);
+    };
+  }, [isEmailValid, isPasswordValid]);
 
   const emailChangeHandler = (event) => {
-    // no need for useReducer hook
-    // setEnteredEmail(event.target.value);
-
+    // dispatch using type and payload
     emailDispatcher({ type: 'USER_INPUT', val: event.target.value });
   };
 
   const passwordChangeHandler = (event) => {
+    passwordDispatcher({ type: 'USER_INPUT', val: event.target.value });
     // setEnteredPassword(event.target.value);
   };
 
@@ -57,24 +66,31 @@ const Login = (props) => {
   };
 
   const validatePasswordHandler = () => {
+    passwordDispatcher({ type: 'INPUT_BLUR' });
     // setPasswordIsValid(enteredPassword.trim().length > 6);
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(enteredEmail, enteredPassword);
+    props.onLogin(emailState.value, passwordState.value);
   };
 
   return (
     <Card className={classes.login}>
       <form onSubmit={submitHandler}>
-        <div className={`${classes.control} ${emailIsValid === false ? classes.invalid : ''}`}>
+        <div className={`${classes.control} ${emailState.isValid === false ? classes.invalid : ''}`}>
           <label htmlFor="email">E-Mail</label>
-          <input type="email" id="email" value={enteredEmail} onChange={emailChangeHandler} onBlur={validateEmailHandler} />
+          <input type="email" id="email" value={emailState.value} onChange={emailChangeHandler} onBlur={validateEmailHandler} />
         </div>
-        <div className={`${classes.control} ${passwordIsValid === false ? classes.invalid : ''}`}>
+        <div className={`${classes.control} ${passwordState.isValid === false ? classes.invalid : ''}`}>
           <label htmlFor="password">Password</label>
-          <input type="password" id="password" value={enteredPassword} onChange={passwordChangeHandler} onBlur={validatePasswordHandler} />
+          <input
+            type="password"
+            id="password"
+            value={passwordState.value}
+            onChange={passwordChangeHandler}
+            onBlur={validatePasswordHandler}
+          />
         </div>
         <div className={classes.actions}>
           <Button type="submit" className={classes.btn} disabled={!formIsValid}>
